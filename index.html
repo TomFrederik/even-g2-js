@@ -3,52 +3,158 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>G2 Web</title>
+<title>G2 Web — Multi-Container &amp; Hardware Self-Test</title>
 <style>
   :root {
-    --bg: #f6f7f6; --panel: #ffffff; --text: #18201b; --muted: #5f6b64; --line: #dde3df;
-    --accent: #13824a; --accent-text: #ffffff; --lens-bg: #050806; --lens: #45ff7a; --warn: #b4580e;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #0f1311; --panel: #171c19; --text: #e6ece8; --muted: #95a39b; --line: #2a322d;
-            --accent: #3ccf7c; --accent-text: #06120b; --warn: #f0a35a; }
+    color-scheme: light;
+    --bg: #f6f7f6;
+    --panel: #ffffff;
+    --text: #18201b;
+    --muted: #5b6760;
+    --line: #dbe1dd;
+    --accent: #137a46;
+    --accent-soft: #e6f4ec;
+    --accent-text: #ffffff;
+    --warn: #9a4d09;
+    --warn-soft: #fff4e4;
+    --err: #b42318;
+    --err-soft: #fdeceb;
+    --lens-bg: #050806;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-         font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
-  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
-  header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
-  h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 10px; }
-  .status { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  main { max-width: 1120px; margin: 0 auto; padding: 20px 16px 48px; }
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 10px; }
+  .status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
   .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
   .dot.on { background: var(--accent); }
+  .dot.demo { background: #d08700; }
   .spacer { flex: 1; }
-  .grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; }
-  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  .grid { display: grid; grid-template-columns: minmax(0, 620px) minmax(320px, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
   section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
-  .stack > * + * { margin-top: 16px; }
-  .lens { aspect-ratio: 2 / 1; background: var(--lens-bg); border-radius: 10px; color: var(--lens);
-          font: 500 clamp(9px, 1.55vw, 14px)/1.35 ui-rounded, -apple-system, system-ui, sans-serif;
-          padding: 2.2% 2.6%; white-space: pre; overflow: hidden; }
-  textarea, input, select { width: 100%; font: inherit; color: var(--text); background: var(--bg);
-          border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
-  textarea { min-height: 96px; resize: vertical; }
-  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  .stack > * + * { margin-top: 14px; }
+
+  .bezel {
+    background: #0a0e0b;
+    border: 2px solid #253129;
+    border-radius: 12px;
+    padding: 10px;
+    display: inline-block;
+    max-width: 100%;
+  }
+  canvas#lens {
+    display: block;
+    width: 576px;
+    height: 288px;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 1;
+    background: #000000;
+    image-rendering: pixelated;
+    border-radius: 4px;
+  }
+
+  .tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line); margin-bottom: 14px; padding-bottom: 8px; flex-wrap: wrap; }
+  .tab {
+    font: inherit;
+    font-weight: 550;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .tab.active { background: var(--accent-soft); color: var(--accent); border-color: #bfe2ce; }
+  .pane { display: none; }
+  .pane.active { display: block; }
+
+  textarea, input[type="text"], input[type="number"], select {
+    width: 100%;
+    font: inherit;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 7px 10px;
+  }
+  textarea { min-height: 84px; resize: vertical; }
+  label { display: block; font-size: 12.5px; color: var(--muted); margin: 8px 0 4px; }
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
-  .row label { margin: 0; display: flex; gap: 6px; align-items: center; color: var(--text); font-size: 14px; }
-  .row input[type=checkbox] { width: auto; }
-  button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--text);
-           border-radius: 8px; padding: 7px 14px; cursor: pointer; }
-  button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; font-weight: 600; }
+  .row label { margin: 0; display: inline-flex; gap: 6px; align-items: center; color: var(--text); font-size: 13px; }
+  button {
+    font: inherit;
+    font-weight: 550;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: var(--bg); }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+  button.primary:hover:not(:disabled) { background: #0f663a; }
   button:disabled { opacity: 0.45; cursor: default; }
-  #log { font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted);
-         max-height: 220px; overflow: auto; white-space: pre-wrap; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font: 600 11.5px/1.4 var(--mono);
+    background: var(--bg);
+    color: var(--muted);
+    border: 1px solid var(--line);
+  }
+  .badge.ok { background: var(--accent-soft); color: var(--accent); border-color: #bfe2ce; }
+  .badge.warn { background: var(--warn-soft); color: var(--warn); border-color: #f2d3a8; }
+  .badge.err { background: var(--err-soft); color: var(--err); border-color: #f5c2be; }
+
+  #log {
+    font: 12px/1.5 var(--mono);
+    color: var(--muted);
+    max-height: 250px;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
   #log .g { color: var(--accent); }
-  .note { font-size: 13px; color: var(--muted); }
-  .warn { color: var(--warn); }
+  #log .e { color: var(--err); }
+  .note { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+  .warn-text { color: var(--warn); }
+
   .params { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
   .params .wide { grid-column: 1 / -1; }
+
+  .step-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .step-card {
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 10px 12px;
+    background: var(--bg);
+  }
+  .step-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .step-title { font-weight: 600; font-size: 13.5px; }
+  .step-desc { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+  .step-confirm { display: flex; gap: 6px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+  .step-confirm input { width: 110px; font-family: var(--mono); text-transform: uppercase; background: var(--panel); }
+  .step-out { font: 11.5px/1.4 var(--mono); color: var(--muted); margin-top: 6px; word-break: break-word; }
+
+  .opts-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+  @media (max-width: 560px) { .opts-grid { grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
 <body>
@@ -57,138 +163,638 @@
     <h1>G2 Web</h1>
     <div class="status"><span class="dot" id="dot"></span><span id="state">Not connected</span></div>
     <div class="spacer"></div>
+    <button id="demo-btn">Demo Preview</button>
+    <button id="relay-btn">Pair &amp; Relay to CLI</button>
     <button class="primary" id="connect">Connect glasses</button>
-    <button id="forget" hidden>Choose other glasses</button>
+    <button id="forget" hidden>Forget glasses</button>
   </header>
 
   <p class="note" id="support"></p>
+  <section id="relay-banner" hidden style="margin-top: 12px; background: var(--accent-soft); border-color: #bfe2ce;">
+    <div class="row" style="margin-top: 0;">
+      <strong>GATT Relay active</strong>
+      <span class="badge ok" id="relay-ble">BLE: —</span>
+      <span class="badge" id="relay-ws">WS: connecting…</span>
+      <span class="badge" id="relay-ctrl">CLI: idle</span>
+      <span class="badge" id="relay-counts">TX 0 / RX 0</span>
+      <div class="spacer"></div>
+      <button id="relay-stop">Stop Relay</button>
+    </div>
+    <p class="note" style="margin-top: 6px;">Leave this tab open — the CLI can run <code>node scripts/hw-test.mjs</code> against your paired glasses without refreshing this page.</p>
+  </section>
 
-  <div class="grid">
+  <div class="grid" style="margin-top: 14px;">
     <div class="stack">
       <section>
-        <h2>Lens</h2>
-        <div class="lens" id="lens"> </div>
-        <p class="note">Approximate preview. The glasses use their own proportional font.</p>
-      </section>
-      <section>
-        <h2>Text</h2>
-        <textarea id="text">Hello from a web page!
-This came straight from the browser over Web Bluetooth.</textarea>
-        <div class="row">
-          <label><input type="checkbox" id="live"> Live</label>
+        <div class="row" style="margin-top: 0; margin-bottom: 10px;">
+          <h2 style="margin: 0;">Lens Preview (576×288)</h2>
           <div class="spacer"></div>
-          <button id="clear" disabled>Clear lens</button>
-          <button class="primary" id="send" disabled>Send</button>
+          <span class="badge" id="lens-mode">idle</span>
+        </div>
+        <div class="bezel">
+          <canvas id="lens" width="576" height="288"></canvas>
+        </div>
+        <p class="note">Approximate visual preview (not LVGL firmware typography). In Demo Preview mode, pixels are decoded from actual reassembled <code>aa 21</code> BLE frames &amp; 4-bpp BMPs.</p>
+      </section>
+
+      <section>
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="containers">Multi-Container &amp; Images</button>
+          <button class="tab" data-tab="selftest">Hardware Self-Test</button>
+          <button class="tab" data-tab="text">Text &amp; Animations</button>
+        </div>
+
+        <!-- Tab 1: Multi-Container & Images -->
+        <div class="pane active" id="pane-containers">
+          <div class="row" style="margin-top: 0;">
+            <button class="primary" id="btn-dash" disabled>Mixed Dashboard</button>
+            <button id="btn-odd-card" disabled>Odd Test Card (145×112)</button>
+            <button id="btn-full-card" disabled>2×2 Full Card (576×288)</button>
+          </div>
+          <div class="row">
+            <button id="btn-upd-text" disabled>Update Header Text</button>
+            <button id="btn-imu-on" disabled>IMU On (500)</button>
+            <button id="btn-imu-off" disabled>IMU Off</button>
+            <button id="btn-shutdown" disabled>Shutdown Page</button>
+          </div>
+          <div class="row">
+            <label><input type="checkbox" id="opt-warmup" checked> Warmup frame</label>
+            <label><input type="checkbox" id="opt-zeros"> Explicit proto zeros (A/B)</label>
+            <label><input type="checkbox" id="opt-cap-overlay"> Capture overlay on 2×2</label>
+          </div>
+          <p class="note">Multi-container <code>setPage</code>, 4-bpp BMP streaming, <code>shutdown</code>, and <code>setImu</code> are untried on physical G2 firmware until run via Hardware Self-Test.</p>
+        </div>
+
+        <!-- Tab 2: Hardware Self-Test -->
+        <div class="pane" id="pane-selftest">
+          <div class="row" style="margin-top: 0;">
+            <span class="badge ok" id="st-code-badge">Run code: ----</span>
+            <button id="st-new-code">New code</button>
+            <div class="spacer"></div>
+            <button class="primary" id="st-run-all" disabled>Run Safe Steps</button>
+            <button id="st-export">Export Scrubbed JSON</button>
+          </div>
+
+          <div class="opts-grid">
+            <div>
+              <label for="st-window">Window size</label>
+              <input id="st-window" type="number" min="1" max="8" value="4">
+            </div>
+            <div>
+              <label for="st-frag">Fragment bytes</label>
+              <input id="st-frag" type="number" min="512" max="4096" step="256" value="3800">
+            </div>
+            <div>
+              <label for="st-delay">Post-rebuild delay (ms)</label>
+              <input id="st-delay" type="number" min="0" max="2000" step="100" value="0">
+            </div>
+          </div>
+
+          <div class="step-list" id="st-steps"></div>
+        </div>
+
+        <!-- Tab 3: Upstream Text & Animations -->
+        <div class="pane" id="pane-text">
+          <label for="text">Full-lens text</label>
+          <textarea id="text">Hello from a web page!
+This came straight from the browser over Web Bluetooth.</textarea>
+          <div class="row">
+            <label><input type="checkbox" id="live"> Live</label>
+            <div class="spacer"></div>
+            <button id="clear" disabled>Clear lens</button>
+            <button class="primary" id="send" disabled>Send</button>
+          </div>
+          <hr style="border: 0; border-top: 1px solid var(--line); margin: 14px 0;">
+          <label for="effect">Animation</label>
+          <select id="effect">
+            <option value="countdown">Countdown</option>
+            <option value="spinner">Spinner</option>
+            <option value="progress">Progress bar</option>
+            <option value="stopwatch">Stopwatch</option>
+            <option value="clock">Clock</option>
+            <option value="ticker">Ticker</option>
+            <option value="typewriter">Typewriter</option>
+            <option value="breathe">Breathing</option>
+            <option value="equalizer">Equalizer</option>
+          </select>
+          <div class="params" id="params"></div>
+          <div class="row">
+            <span class="note" id="animState" style="margin: 0;"></span>
+            <div class="spacer"></div>
+            <button id="stop" disabled>Stop</button>
+            <button class="primary" id="play" disabled>Play on lens</button>
+          </div>
         </div>
       </section>
     </div>
 
     <div class="stack">
       <section>
-        <h2>Animation</h2>
-        <select id="effect">
-          <option value="countdown">Countdown</option>
-          <option value="spinner">Spinner</option>
-          <option value="progress">Progress bar</option>
-          <option value="stopwatch">Stopwatch</option>
-          <option value="clock">Clock</option>
-          <option value="ticker">Ticker</option>
-          <option value="typewriter">Typewriter</option>
-          <option value="breathe">Breathing</option>
-          <option value="equalizer">Equalizer</option>
-        </select>
-        <div class="params" id="params"></div>
-        <div class="row">
-          <span class="note" id="animState"></span>
+        <div class="row" style="margin-top: 0; margin-bottom: 8px;">
+          <h2 style="margin: 0;">Gestures &amp; Protocol Log</h2>
           <div class="spacer"></div>
-          <button id="stop" disabled>Stop</button>
-          <button class="primary" id="play" disabled>Play on lens</button>
+          <span class="badge" id="trace-count">0 frames</span>
+          <button id="clear-log" style="padding: 3px 8px; font-size: 12px;">Clear</button>
         </div>
-      </section>
-      <section>
-        <h2>Gestures &amp; log</h2>
         <div id="log"></div>
+        <div class="row" id="demo-gestures" hidden>
+          <span class="note" style="margin: 0;">Demo gestures:</span>
+          <button data-sim-g="tap">Tap</button>
+          <button data-sim-g="swipe-forward">Swipe ↓</button>
+          <button data-sim-g="long-press">Long-press</button>
+        </div>
       </section>
     </div>
   </div>
 </main>
 
 <script>
-  // Web Bluetooth needs a secure context; hop from http:// to https:// (except locally).
   if (location.protocol === "http:" && !["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)) {
     location.replace(location.href.replace(/^http:/, "https:"));
   }
 </script>
 <script type="module">
-import { G2, effects } from "./g2.js";
+import { G2, buildTestCardBmp, effects } from "./g2.js";
+import { GattRelayClient } from "./relay-client.js";
+import { SELF_TEST_STEPS, buildFullTestCardRgba, buildScrubbedTrace, randomCode } from "./selftest.js";
 
 const $ = (id) => document.getElementById(id);
 let g2 = null;
-let preview = null; // { effect, start, state } when previewing locally
+let demoMock = null;
+let relayClient = null;
+let preview = null;
+let dashCounter = 0;
+let currentCode = randomCode();
+const traces = [];
+const gestureHistory = [];
+const stepResults = {};
 
 const support = $("support");
 if (!G2.supported) {
-  support.innerHTML = '<span class="warn">This browser has no Web Bluetooth.</span> Use Chrome or Edge on a Mac, PC or Android phone (not Safari or iOS).';
+  support.innerHTML = '<span class="warn-text">This browser has no Web Bluetooth.</span> Use Chrome or Edge on macOS/Windows/Linux/Android for real glasses, or click <strong>Demo Preview</strong> to test locally against the independent mock peripheral.';
   $("connect").disabled = true;
+  $("relay-btn").disabled = true;
 } else if (!window.isSecureContext) {
-  support.innerHTML = '<span class="warn">Web Bluetooth needs https or localhost.</span>';
+  support.innerHTML = '<span class="warn-text">Web Bluetooth requires HTTPS or localhost.</span>';
 } else {
-  support.textContent = "The glasses talk to one host at a time: quit G2 Link and turn off your phone's Bluetooth first. Each temple is a separate Bluetooth device, so the first time the picker lists two: choose the one with _R_ in its name. After that it lists only that one.";
+  support.textContent = "Disconnect the Even App (or phone Bluetooth) first. Pick the _R_ temple. Use Pair & Relay to CLI to run tests against your glasses with zero refreshes.";
 }
+
+// Tabs
+document.querySelectorAll(".tab").forEach((btn) => {
+  btn.onclick = () => {
+    document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b === btn));
+    document.querySelectorAll(".pane").forEach((p) => p.classList.toggle("active", p.id === `pane-${btn.dataset.tab}`));
+  };
+});
 
 function log(text, cls = "") {
   const line = document.createElement("div");
   line.className = cls;
-  line.textContent = `${new Date().toLocaleTimeString()}  ${text}`;
+  line.textContent = `${new Date().toISOString().slice(11, 19)}  ${text}`;
   $("log").append(line);
   $("log").scrollTop = $("log").scrollHeight;
 }
+$("clear-log").onclick = () => { $("log").innerHTML = ""; };
 
-function setConnected(on) {
-  $("dot").classList.toggle("on", on);
-  $("connect").textContent = on ? "Disconnect" : "Connect glasses";
-  for (const id of ["send", "clear", "play"]) $(id).disabled = !on;
+// 576x288 lens renderer (renders decoded MockG2Peripheral state when in Demo Preview, or text preview)
+const lensCanvas = $("lens");
+const lensCtx = lensCanvas.getContext("2d");
+
+function green4(level) {
+  const lvl = Math.max(0, Math.min(15, Math.round(level)));
+  if (lvl === 0) return "#000000";
+  const t = lvl / 15;
+  return `rgb(${Math.round(t * 26)}, ${Math.round(42 + t * 213)}, ${Math.round(t * 90)})`;
+}
+
+function renderWireState(mock) {
+  lensCtx.fillStyle = "#000000";
+  lensCtx.fillRect(0, 0, 576, 288);
+  if (!mock || !mock.pageLive) {
+    lensCtx.fillStyle = green4(6);
+    lensCtx.font = "16px ui-monospace, monospace";
+    lensCtx.textBaseline = "middle";
+    lensCtx.textAlign = "center";
+    lensCtx.fillText(mock ? "[Page shut down]" : "[Not connected]", 288, 144);
+    lensCtx.textAlign = "left";
+    return;
+  }
+
+  for (const c of mock.containers.values()) {
+    const x = c.XPosition ?? 0, y = c.YPosition ?? 0;
+    const w = c.Width ?? 100, h = c.Height ?? 50;
+    const pad = c.PaddingLength ?? 4;
+    const bw = c.BorderWidth ?? 0, bc = c.BorderColor ?? 0, br = c.BorderRadius ?? 0;
+
+    lensCtx.save();
+    lensCtx.beginPath();
+    lensCtx.roundRect(x, y, w, h, br);
+    lensCtx.clip();
+
+    if (c.kind === "text") {
+      lensCtx.fillStyle = green4(15);
+      lensCtx.font = "17px system-ui, sans-serif";
+      lensCtx.textBaseline = "top";
+      const lines = String(c.Content ?? "").split("\n");
+      lines.forEach((ln, i) => lensCtx.fillText(ln, x + pad, y + pad + i * 22));
+    } else if (c.kind === "list") {
+      const items = c.ItemContainer?.ItemName ?? [];
+      lensCtx.font = "17px system-ui, sans-serif";
+      lensCtx.textBaseline = "middle";
+      const rowH = 34;
+      items.forEach((it, idx) => {
+        const ry = y + pad + idx * rowH;
+        if (idx === 0) {
+          lensCtx.fillStyle = "rgba(25, 220, 105, 0.22)";
+          lensCtx.beginPath();
+          lensCtx.roundRect(x + pad, ry + 2, w - pad * 2, rowH - 4, 4);
+          lensCtx.fill();
+          if (c.ItemContainer?.IsItemSelectBorderEn !== 0) {
+            lensCtx.strokeStyle = green4(13);
+            lensCtx.lineWidth = 1.5;
+            lensCtx.stroke();
+          }
+        }
+        lensCtx.fillStyle = idx === 0 ? green4(15) : green4(9);
+        lensCtx.fillText(`${idx === 0 ? "▸ " : "  "}${it}`, x + pad + 8, ry + rowH / 2);
+      });
+    } else if (c.kind === "image") {
+      const img = mock.renderedImages.get(c.ContainerName);
+      if (img) {
+        const imgData = lensCtx.createImageData(img.width, img.height);
+        for (let p = 0; p < img.pixels.length; p++) {
+          const lvl = img.pixels[p];
+          const off = p * 4;
+          if (lvl === 0) {
+            imgData.data[off] = 0; imgData.data[off + 1] = 0; imgData.data[off + 2] = 0; imgData.data[off + 3] = 255;
+          } else {
+            const t = lvl / 15;
+            imgData.data[off] = Math.round(t * 26);
+            imgData.data[off + 1] = Math.round(42 + t * 213);
+            imgData.data[off + 2] = Math.round(t * 90);
+            imgData.data[off + 3] = 255;
+          }
+        }
+        lensCtx.putImageData(imgData, x, y);
+      } else {
+        lensCtx.strokeStyle = green4(5);
+        lensCtx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+      }
+    }
+    lensCtx.restore();
+
+    if (bw > 0 && bc > 0) {
+      lensCtx.save();
+      lensCtx.strokeStyle = green4(bc);
+      lensCtx.lineWidth = bw;
+      lensCtx.beginPath();
+      lensCtx.roundRect(x + bw / 2, y + bw / 2, w - bw, h - bw, br);
+      lensCtx.stroke();
+      lensCtx.restore();
+    }
+  }
+}
+
+function renderLocalTextPreview(txt) {
+  lensCtx.fillStyle = "#000000";
+  lensCtx.fillRect(0, 0, 576, 288);
+  lensCtx.fillStyle = green4(15);
+  lensCtx.font = "16px ui-monospace, monospace";
+  lensCtx.textBaseline = "top";
+  String(txt || "").split("\n").forEach((ln, i) => lensCtx.fillText(ln, 14, 14 + i * 24));
+}
+
+function setConnected(on, isDemo = false) {
+  $("dot").classList.toggle("on", on && !isDemo);
+  $("dot").classList.toggle("demo", on && isDemo);
+  $("connect").textContent = on && !isDemo ? "Disconnect" : "Connect glasses";
+  $("demo-btn").textContent = on && isDemo ? "Stop Demo" : "Demo Preview";
+  $("lens-mode").textContent = !on ? "idle" : isDemo ? "wire-decoded mock" : "live BLE";
+  $("lens-mode").className = `badge ${!on ? "" : isDemo ? "warn" : "ok"}`;
+  $("demo-gestures").hidden = !(on && isDemo);
+  const ids = ["send", "clear", "play", "btn-dash", "btn-odd-card", "btn-full-card", "btn-upd-text", "btn-imu-on", "btn-imu-off", "btn-shutdown", "st-run-all"];
+  for (const id of ids) $(id).disabled = !on;
+  document.querySelectorAll("[data-run-step]").forEach((b) => { b.disabled = !on; });
   if (!on) $("stop").disabled = true;
 }
 
-// Remember this pair's right temple so the picker shows just that one next time.
+function wireG2Events(instance, isDemo) {
+  instance.addEventListener("trace", (e) => {
+    traces.push(e.detail);
+    $("trace-count").textContent = `${traces.length} frames`;
+    if (demoMock) renderWireState(demoMock);
+  });
+  instance.addEventListener("gesture", (e) => {
+    const d = e.detail;
+    gestureHistory.push({ ts: Date.now(), ...d });
+    if (d.type === "motion") return;
+    log(`${d.type}${d.source ? ` from ${d.source}` : ""}${d.item ? `: ${d.item}` : ""}`, "g");
+  });
+  instance.addEventListener("status", (e) => {
+    const s = e.detail;
+    const label = isDemo ? "Mock G2" : instance.name;
+    $("state").textContent = `${label} · ${s.battery}%${s.charging ? " (charging)" : ""} · fw ${s.firmware}`;
+  });
+  instance.addEventListener("disconnect", () => {
+    demoMock = null;
+    setConnected(false);
+    $("state").textContent = "Disconnected";
+    log("disconnected");
+    renderWireState(null);
+  });
+}
+
+// Remember right temple prefix
 const store = {
   get() { try { return localStorage.getItem("g2.prefix"); } catch { return null; } },
   set(v) { try { v ? localStorage.setItem("g2.prefix", v) : localStorage.removeItem("g2.prefix"); } catch {} },
 };
 $("forget").hidden = !store.get();
-$("forget").onclick = () => { store.set(null); $("forget").hidden = true; log("forgot these glasses; the picker will list every temple"); };
+$("forget").onclick = () => { store.set(null); $("forget").hidden = true; log("forgot saved glasses prefix"); };
 
 $("connect").onclick = async () => {
-  if (g2?.connected) { g2.disconnect(); return; }
+  if (relayClient) { relayClient.stop(); relayClient = null; $("relay-banner").hidden = true; }
+  if (g2?.connected && !demoMock) { g2.disconnect(); return; }
+  if (g2?.connected) g2.disconnect();
   try {
     $("state").textContent = "Connecting…";
-    g2 = await G2.connect({ log: (s) => log(s), namePrefix: store.get() ?? undefined });
+    g2 = await G2.connect({
+      log: (s) => log(s),
+      trace: true,
+      namePrefix: store.get() ?? undefined,
+      explicitZeros: $("opt-zeros").checked,
+    });
     const prefix = G2.rightTemplePrefix(g2.name);
     if (prefix && /_R_/i.test(g2.name)) { store.set(prefix); $("forget").hidden = false; }
-    g2.addEventListener("gesture", (e) => {
-      const d = e.detail;
-      if (d.type === "motion") return;
-      log(`${d.type}${d.source ? ` from ${d.source}` : ""}${d.item ? `: ${d.item}` : ""}`, "g");
-    });
-    g2.addEventListener("status", (e) => {
-      const s = e.detail;
-      $("state").textContent = `${g2.name} · battery ${s.battery}%${s.charging ? " (charging)" : ""} · fw ${s.firmware}`;
-    });
-    g2.addEventListener("disconnect", () => { setConnected(false); $("state").textContent = "Disconnected"; log("disconnected"); });
-    setConnected(true);
+    wireG2Events(g2, false);
+    setConnected(true, false);
     $("state").textContent = g2.name;
     log(`connected to ${g2.name}`);
   } catch (e) {
     $("state").textContent = "Not connected";
-    if (e.name !== "NotFoundError") log(`connect failed: ${e.message}`);
+    if (e.name !== "NotFoundError") log(`connect failed: ${e.message}`, "e");
   }
 };
 
-// Text
-const showText = () => { stopPreview(); $("lens").textContent = $("text").value || " "; return g2?.text($("text").value); };
+function updateRelayBanner(d) {
+  $("relay-ble").textContent = `BLE: ${d.bleConnected ? d.deviceName || "paired" : "disconnected"}`;
+  $("relay-ble").className = `badge ${d.bleConnected ? "ok" : "err"}`;
+  $("relay-ws").textContent = `WS: ${d.wsConnected ? "open" : "reconnecting…"}`;
+  $("relay-ws").className = `badge ${d.wsConnected ? "ok" : "warn"}`;
+  $("relay-ctrl").textContent = `CLI: ${d.controllerConnected ? "attached" : "idle"}`;
+  $("relay-ctrl").className = `badge ${d.controllerConnected ? "ok" : ""}`;
+  $("relay-counts").textContent = `TX ${d.txCount} / RX ${d.rxCount}`;
+  $("dot").classList.toggle("on", d.bleConnected && d.wsConnected);
+  $("state").textContent = d.bleConnected
+    ? `Relaying ${d.deviceName || "Even G2"} -> CLI`
+    : "Relay stopped (BLE disconnected)";
+}
+
+$("relay-btn").onclick = async () => {
+  if (g2?.connected) g2.disconnect();
+  if (relayClient) { relayClient.stop(); relayClient = null; }
+  try {
+    $("state").textContent = "Pairing for CLI relay…";
+    relayClient = new GattRelayClient();
+    relayClient.addEventListener("log", (e) => log(`[relay] ${e.detail}`));
+    relayClient.addEventListener("state", (e) => updateRelayBanner(e.detail));
+    await relayClient.pairAndStart({ namePrefix: store.get() ?? undefined });
+    const prefix = G2.rightTemplePrefix(relayClient.deviceName);
+    if (prefix && /_R_/i.test(relayClient.deviceName)) { store.set(prefix); $("forget").hidden = false; }
+    $("relay-banner").hidden = false;
+    $("relay-btn").textContent = "Re-pair Relay";
+  } catch (e) {
+    relayClient = null;
+    $("relay-banner").hidden = true;
+    $("state").textContent = "Not connected";
+    if (e.name !== "NotFoundError") log(`relay failed: ${e.message}`, "e");
+  }
+};
+
+$("relay-stop").onclick = () => {
+  if (relayClient) { relayClient.stop(); relayClient = null; }
+  $("relay-banner").hidden = true;
+  $("relay-btn").textContent = "Pair & Relay to CLI";
+  $("dot").classList.remove("on");
+  $("state").textContent = "Not connected";
+  log("[relay] stopped");
+};
+
+$("demo-btn").onclick = async () => {
+  if (g2?.connected && demoMock) { g2.disconnect(); return; }
+  if (g2?.connected) g2.disconnect();
+  const { MockG2Peripheral } = await import("./test/mock-g2.mjs");
+  demoMock = new MockG2Peripheral({ ackDelayMs: 2, dropFirstImageStream: true });
+  g2 = await G2.fromDevice(demoMock.device, {
+    log: (s) => log(s),
+    trace: true,
+    heartbeatMs: 5000,
+    explicitZeros: $("opt-zeros").checked,
+  });
+  wireG2Events(g2, true);
+  setConnected(true, true);
+  renderWireState(demoMock);
+  log("connected to local independent MockG2Peripheral (wire-decoded)");
+};
+
+document.querySelectorAll("[data-sim-g]").forEach((btn) => {
+  btn.onclick = () => {
+    if (!demoMock) return;
+    const act = btn.dataset.simG;
+    if (act === "tap") demoMock.pushListEvent({ containerName: "dash-lst", itemName: "Selected item", itemIndex: 0, eventType: 0 });
+    else if (act === "swipe-forward") demoMock.pushSysEvent(2, 1);
+    else if (act === "long-press") { demoMock.pushSysEvent(9, 1); setTimeout(() => demoMock?.pushSysEvent(10, 1), 250); }
+  };
+});
+
+// Multi-container & image playground
+$("opt-zeros").onchange = () => { if (g2) g2.explicitZeros = $("opt-zeros").checked; };
+
+async function runAction(label, fn) {
+  try {
+    const out = await fn();
+    log(`${label}: OK${out ? ` ${JSON.stringify(out)}` : ""}`);
+    if (demoMock) renderWireState(demoMock);
+  } catch (e) {
+    log(`${label} FAILED: ${e.message}`, "e");
+  }
+}
+
+$("btn-dash").onclick = () => runAction("Mixed Dashboard", async () => {
+  stopPreview();
+  dashCounter = 0;
+  await g2.setPage({
+    texts: [
+      { id: 1, name: "dash-hdr", x: 12, y: 8, width: 552, height: 42, borderWidth: 1, borderColor: 6, borderRadius: 6, paddingLength: 8, content: `G2 Web Multi-Container  |  Count: ${dashCounter}` },
+      { id: 4, name: "dash-ftr", x: 12, y: 242, width: 552, height: 36, paddingLength: 6, content: "Borders + list + 4-bpp BMP image container" },
+    ],
+    lists: [{
+      id: 2, name: "dash-lst", x: 12, y: 60, width: 380, height: 170,
+      borderWidth: 1, borderColor: 4, borderRadius: 6, paddingLength: 6,
+      items: ["Counter (+1)", "Odd Test Card", "2x2 Full Lens", "Shutdown"],
+      capture: true,
+    }],
+    images: [{ id: 3, name: "dash-img", x: 408, y: 84, width: 144, height: 112 }],
+  });
+  const bmp = buildTestCardBmp(144, 112, { label: currentCode, cornerTag: "OK" });
+  return g2.updateImage("dash-img", bmp, { warmup: $("opt-warmup").checked, dedup: false });
+});
+
+$("btn-upd-text").onclick = () => runAction("updateText", async () => {
+  dashCounter++;
+  await g2.updateText("dash-hdr", `G2 Web Multi-Container  |  Count: ${dashCounter}`);
+  return { count: dashCounter };
+});
+
+$("btn-odd-card").onclick = () => runAction("Odd Test Card", async () => {
+  stopPreview();
+  await g2.setPage({
+    texts: [{ id: 1, name: "odd-lbl", x: 12, y: 12, width: 380, height: 46, borderWidth: 1, borderColor: 6, borderRadius: 4, paddingLength: 6, content: `Odd 145x112 Card  |  Code: ${currentCode}` }],
+    images: [{ id: 2, name: "odd-card", x: 410, y: 82, width: 145, height: 112 }],
+  });
+  const bmp = buildTestCardBmp(145, 112, { label: currentCode, cornerTag: "OD" });
+  return g2.updateImage("odd-card", bmp, { warmup: $("opt-warmup").checked, dedup: false });
+});
+
+$("btn-full-card").onclick = () => runAction("2x2 Full Card", async () => {
+  stopPreview();
+  const full = buildFullTestCardRgba(currentCode);
+  return g2.setFullImage(full, {
+    warmup: $("opt-warmup").checked,
+    captureOverlay: $("opt-cap-overlay").checked,
+    dedup: false,
+  });
+});
+
+$("btn-imu-on").onclick = () => runAction("IMU On", () => g2.setImu(true, 500));
+$("btn-imu-off").onclick = () => runAction("IMU Off", () => g2.setImu(false, 500));
+$("btn-shutdown").onclick = () => runAction("Shutdown", () => g2.shutdown(0));
+
+// Hardware Self-Test tab
+function updateCodeBadge() {
+  $("st-code-badge").textContent = `Run code: ${currentCode}`;
+}
+$("st-new-code").onclick = () => { currentCode = randomCode(); updateCodeBadge(); };
+updateCodeBadge();
+
+function getSelfTestOpts() {
+  return {
+    code: currentCode,
+    warmup: $("opt-warmup").checked,
+    explicitZeros: $("opt-zeros").checked,
+    captureOverlay: $("opt-cap-overlay").checked,
+    windowSize: Number($("st-window").value) || 4,
+    fragmentSize: Number($("st-frag").value) || 3800,
+    postRebuildDelayMs: Number($("st-delay").value) || 0,
+  };
+}
+
+function renderSelfTestSteps() {
+  const host = $("st-steps");
+  host.innerHTML = "";
+  for (const step of SELF_TEST_STEPS) {
+    const card = document.createElement("div");
+    card.className = "step-card";
+    card.innerHTML = `
+      <div class="step-head">
+        <span class="step-title">${step.title}</span>
+        <span class="badge" id="st-badge-${step.id}">pending</span>
+        <div class="spacer"></div>
+        <button data-run-step="${step.id}" ${g2?.connected ? "" : "disabled"}>Run</button>
+      </div>
+      <div class="step-desc">${step.description}</div>
+      ${step.needsVisualConfirm ? `
+        <div class="step-confirm">
+          <span class="note" style="margin:0;">Code seen on lens:</span>
+          <input type="text" maxlength="8" placeholder="4-char code" id="st-seen-${step.id}">
+          <button data-confirm-step="${step.id}">Save observation</button>
+        </div>
+      ` : ""}
+      <div class="step-out" id="st-out-${step.id}"></div>
+    `;
+    host.append(card);
+  }
+
+  host.querySelectorAll("[data-run-step]").forEach((btn) => {
+    btn.onclick = () => runSelfTestStep(btn.dataset.runStep);
+  });
+  host.querySelectorAll("[data-confirm-step]").forEach((btn) => {
+    btn.onclick = () => {
+      const id = btn.dataset.confirmStep;
+      const seen = $(`st-seen-${id}`).value.trim().toUpperCase();
+      stepResults[id] = { ...(stepResults[id] ?? {}), userSaw: seen, matchedCode: seen === currentCode };
+      const b = $(`st-badge-${id}`);
+      b.textContent = seen === currentCode ? "verified" : "mismatch";
+      b.className = `badge ${seen === currentCode ? "ok" : "err"}`;
+      log(`self-test[${id}] user saw "${seen}" (expected "${currentCode}")`);
+    };
+  });
+}
+
+async function runSelfTestStep(id) {
+  const step = SELF_TEST_STEPS.find((s) => s.id === id);
+  if (!step || !g2?.connected) return;
+  const badge = $(`st-badge-${id}`);
+  const outEl = $(`st-out-${id}`);
+  badge.textContent = "running…";
+  badge.className = "badge warn";
+  g2.explicitZeros = $("opt-zeros").checked;
+  const opts = getSelfTestOpts();
+  const t0 = performance.now();
+  try {
+    const res = await step.run(g2, opts);
+    const ms = Math.round(performance.now() - t0);
+    stepResults[id] = { ok: true, durationMs: ms, result: res };
+    badge.textContent = step.needsVisualConfirm ? "sent (confirm)" : "pass";
+    badge.className = `badge ${step.needsVisualConfirm ? "warn" : "ok"}`;
+    outEl.textContent = `${ms} ms · ${JSON.stringify(res)}`;
+    log(`self-test[${id}] OK (${ms} ms)`);
+    if (demoMock) renderWireState(demoMock);
+  } catch (e) {
+    stepResults[id] = { ok: false, error: e.message };
+    badge.textContent = "error";
+    badge.className = "badge err";
+    outEl.textContent = e.message;
+    log(`self-test[${id}] ERROR: ${e.message}`, "e");
+  }
+}
+
+$("st-run-all").onclick = async () => {
+  for (const step of SELF_TEST_STEPS) {
+    await runSelfTestStep(step.id);
+  }
+};
+
+$("st-export").onclick = async () => {
+  const payload = JSON.stringify(
+    buildScrubbedTrace({ g2, options: getSelfTestOpts(), stepResults, gestures: gestureHistory, traces }),
+    null,
+    2
+  );
+  const blob = new Blob([payload], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `g2-selftest-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+  a.click();
+  try { await navigator.clipboard.writeText(payload); log("exported & copied scrubbed JSON trace"); }
+  catch { log("downloaded scrubbed JSON trace"); }
+};
+
+renderSelfTestSteps();
+
+// Upstream Text & Animations tab
+const showText = () => {
+  stopPreview();
+  if (!demoMock) renderLocalTextPreview($("text").value);
+  return g2?.text($("text").value).then(() => { if (demoMock) renderWireState(demoMock); });
+};
 $("send").onclick = showText;
-$("clear").onclick = () => { stopPreview(); $("lens").textContent = " "; g2?.clear(); };
+$("clear").onclick = () => {
+  stopPreview();
+  if (!demoMock) renderLocalTextPreview(" ");
+  g2?.clear().then(() => { if (demoMock) renderWireState(demoMock); });
+};
 let debounce;
 $("text").oninput = () => {
   if (!$("live").checked) return;
@@ -196,7 +802,6 @@ $("text").oninput = () => {
   debounce = setTimeout(showText, 200);
 };
 
-// Animations
 const PARAMS = {
   countdown: [["label", "Label", "Tea"], ["seconds", "Seconds", 180]],
   spinner: [["label", "Label", "Loading"], ["style", "Style", "dots", ["dots", "bar", "line", "blocks", "arrows"]]],
@@ -231,7 +836,6 @@ function renderParams() {
     wrap.append(l, input);
     box.append(wrap);
   }
-  startPreview();
 }
 
 function currentEffect() {
@@ -248,10 +852,10 @@ function startPreview() {
 function stopPreview() { preview = null; }
 
 (function frameLoop() {
-  if (preview) {
+  if (preview && !demoMock) {
     const t = (performance.now() - preview.start) / 1000;
     const d = preview.effect.duration;
-    $("lens").textContent = preview.effect.frame(d != null ? Math.min(t, d) : t, preview.state);
+    renderLocalTextPreview(preview.effect.frame(d != null ? Math.min(t, d) : t, preview.state));
   }
   requestAnimationFrame(frameLoop);
 })();
@@ -260,7 +864,6 @@ $("effect").onchange = renderParams;
 $("play").onclick = () => {
   startPreview();
   preview.state = g2.play(preview.effect);
-  // Keep the preview in step with what's on the lens (pauses included).
   preview.start = performance.now();
   const sync = setInterval(() => {
     if (!preview || !g2?.connected) return clearInterval(sync);
@@ -272,6 +875,7 @@ $("play").onclick = () => {
 $("stop").onclick = () => { g2?.stop(); $("animState").textContent = "Stopped"; $("stop").disabled = true; stopPreview(); };
 
 renderParams();
+renderWireState(null);
 </script>
 </body>
 </html>

@@ -1,0 +1,11 @@
+{
+  "name": "even-g2-js",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test.mjs && node test/protocol.test.mjs && node test/client-state.test.mjs && node test/relay.test.mjs",
+    "test:visual": "node scripts/visual-verify.mjs",
+    "relay": "node scripts/relay-server.mjs"
+  }
+}
